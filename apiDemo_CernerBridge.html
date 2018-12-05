@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+                
+                <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/all.js" integrity="sha384-xymdQtn1n3lH2wcu0qhcdaOpQwyoarkgLVxC/wZ5q7h9gHtxICrpcaSUfygqZGOe" crossorigin="anonymous"></script>
+                <!-- Bootstrap CSS -->
+                <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+                    
+                    <title>Emory Proof of Concept unified Resource API</title>
+                    </head>
+    <body>
+        
+        <div class="container">
+            <div class="row">
+                <div class="col-3">
+                    <span><h3>1. Get your Authorization Code From Cerner Millennium Sandbox</h3></span>
+                    <form id="codeForm" onSubmit="getCode(event, $(this));">
+                        <div class="form-group">
+                            <label for="code_grant_type">Grant Type</label>
+                            <input class="form-control" id="code_grant_type" name="code_grant_type" value="">
+                                </div>
+                        <div class="form-group">
+                            <label for="code_client_id">Client ID</label>
+                            <input class="form-control" id="code_client_id" name="code_client_id" value="">
+                                </div>
+                        <div class="form-group">
+                            <label for="code_redirect_uri">Redirect URI</label>
+                            <input class="form-control" id="code_redirect_uri" name="code_redirect_uri" value="">
+                                </div>
+                        <div class="form-group">
+                            <label for="code_scope">Scope</label>
+                            <input class="form-control" id="code_scope" name="code_scope" value="">
+                            <input class="form-control" id="code_aud" name="code_scope" type="hidden" value="">
+                                </div>
+                        <input type="submit">
+                            </form>
+                </div>
+                <div class="col-3">
+                    <span><h3>2. Use the Code to get your OAuth Token from Cerner Millennium Sandbox</h3></span>
+                    <form id="tokenForm" onSubmit="getToken(event, $(this));">
+                        <div class="form-group">
+                            <label for="grant_type">Grant Type</label>
+                            <input class="form-control" id="grant_type" name="grant_type" value="">
+                                </div>
+                        <div class="form-group">
+                            <label for="client_id">Client ID</label>
+                            <input class="form-control" id="client_id" name="client_id" value="">
+                                </div>
+                        <div class="form-group">
+                            <label for="redirect_uri">Redirect URI</label>
+                            <input class="form-control" id="redirect_uri" name="redirect_uri" value="">
+                                </div>
+                        <div class="form-group">
+                            <label for="code">Code</label>
+                            <input class="form-control" id="code" name="code" value="">
+                                </div>
+                        <input type="submit">
+                            </form>
+                </div>
+                <div class="col-6">
+                    <span><h3>3. Use the Token to request your resource from the Cerner Ignite Sandbox</h2></span>
+                    <form id="requestResource" onSubmit="requestResource(event, $(this));">
+                        <div class="form-group">
+                            <label for="grant_type">ID Token</label>
+                            <textarea class="form-control" id="id_token" name="id_token" rows=3>
+                            </textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="resource">Resource</label>
+                            <input class="form-control" id="resource" name="resource" value="">
+                                </div>
+                        <div class="form-group">
+                            <label for="resource">Resource ID</label>
+                            <input class="form-control" id="resource_id" name="resource_id" value="">
+                                </div>
+                        <div class="form-group">
+                            <label for="resource">or Query Parameters</label>
+                            <input class="form-control" id="resource_query" name="resource_query" value="">
+                                </div>
+                        <input type="submit">
+                            </form>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 center">
+                    Response:
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <textarea id="response" rows=20 style="min-width: 100%"></textarea>
+                </div>
+            </div>
+            
+        </div>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
+        <script src="https://sdk.amazonaws.com/js/aws-sdk-2.263.1.min.js"></script>
+        <script src="./vkbeautify.0.99.00.beta.js"></script>
+        
+        <script type="text/javascript" charset="utf-8">
+            var CLIENT_ID = "79974f42-e698-4bd4-b87a-5655146f1a21";
+            //var CLIENT_SECRET = "bjr7tb1p37f0v2pl08lsrj1ogk6tfet5ik7hv86kk39i7epmtma";
+            //var REDIRECT_URL = "https://www.google.com";
+            //var REDIRECT_URL = "https://tcerven-emory.github.io/smart-on-fhir-tutorial/api_demo_code.html";
+            var REDIRECT_URL = "https://tcerven-emory.github.io/smart-on-fhir-tutorial/api_demo_code.html";
+            var AUTHORIZATION_ENDPOINT = "https://authorization.sandboxcerner.com/tenants/0b8a0111-e8e6-4c26-a91c-5069cbc6b1ca/protocols/oauth2/profiles/smart-v1/personas/provider/authorize";
+            //var TOKEN_ENDPOINT = "https://emory-patient-data-gateway.auth.us-east-1.amazoncognito.com/token";
+            var TOKEN_ENDPOINT = "https://authorization.sandboxcerner.com/tenants/0b8a0111-e8e6-4c26-a91c-5069cbc6b1ca/protocols/oauth2/profiles/smart-v1/token";
+            //var RESOURCE_ENDPOINT = "https://5or88ar31i.execute-api.us-east-1.amazonaws.com/test";
+            var RESOURCE_ENDPOINT = "https://fhir-ehr.sandboxcerner.com/dstu2/0b8a0111-e8e6-4c26-a91c-5069cbc6b1ca";
+            
+            $(document).ready(function() {
+                              $("#code_grant_type").val("code");
+                              $("#code_client_id").val(CLIENT_ID);
+                              $("#code_redirect_uri").val(REDIRECT_URL);
+                              $("#code_scope").val("user/Patient.read");
+                              $("#code_aud").val("https://fhir-ehr.sandboxcerner.com/dstu2/0b8a0111-e8e6-4c26-a91c-5069cbc6b1ca/");
+                              
+                              $("#grant_type").val("authorization_code");
+                              $("#client_id").val(CLIENT_ID);
+                              $("#redirect_uri").val(REDIRECT_URL);
+                              $("#code").val("");
+                              $("#response").val("");
+                              });
+                              
+                              function S4() {
+							  	return (((1+Math.random())*0x10000)|0).toString(16).substring(1); 
+							  }
+                              
+                              function getUuid() {
+							  	guid = (S4() + S4() + "-" + S4() + "-4" + S4().substr(0,3) + "-" + S4() + "-" + S4() + S4() + S4()).toLowerCase();
+							  	return guid;
+                              }
+                              
+                              function getCode(event, tokenForm) {
+                                  event.preventDefault();
+                                  var authUrl = AUTHORIZATION_ENDPOINT +
+                                  "?response_type=" + $("#code_grant_type").val() +
+                                  "&client_id="    + $("#code_client_id").val() +
+                                  "&redirect_uri=" + $("#code_redirect_uri").val() +
+                                  "&scope=" + $("#code_scope").val() +
+                                  "&aud=" + $("#code_aud").val() +
+                                  "&state=" + getUuid();
+                                  
+                                  oauthPopup({
+                                             path: authUrl
+                                             });
+                              };
+        
+        function oauthPopup(options) {
+            options.windowName = options.windowName ||  'ConnectWithOAuth'; // should not include space for IE
+<!--            options.windowOptions = options.windowOptions || '';-->
+            options.windowOptions = options.windowOptions || 'location=1,status=0,width=800,height=400';
+            options.callback = options.callback || function(){ window.location.reload(); };
+            var that = this;
+            console.log("GET " + options.path);
+            that._oauthWindow = window.open(options.path, options.windowName, options.windowOptions);
+        };
+        
+        function getToken(event, tokenForm) {
+            event.preventDefault();
+            var formData = tokenForm.serializeArray();
+            $.ajax(TOKEN_ENDPOINT, {
+                   method: "POST",
+                   data: formData,
+                   success: function(response, status, jqXHR) {
+                   $("#response").val(vkbeautify.json(response, 4));
+                   $("#id_token").val(response.access_token);
+                   }
+                   });
+        }
+        
+        function requestResource(event, resourceForm) {
+            event.preventDefault();
+            var resource = $("#resource").val();
+            var resourceId = $("#resource_id").val();
+            var resourceQuery = $("#resource_query").val();
+            
+            var resourceUrl = RESOURCE_ENDPOINT + "/" + resource + (resourceId ? "/" + resourceId : "?" + resourceQuery);
+            var authorization = "Bearer " + $("#id_token").val();
+            console.log("GET (headers: { Authorization: " + authorization + "})"  + resourceUrl);
+            $("#response").val("GET (headers: { Authorization: " + authorization + "})"  + resourceUrl + " ...");
+            $.ajax(resourceUrl, {
+                   method: "GET",
+                   headers: {
+                   "Authorization": authorization,
+                   "Accept":"application/json+fhir"
+                   },
+                   success: function(response, status, jqXHR) {
+	               console.dir(response);
+                   $("#response").val(vkbeautify.json(response, 4));
+                   },
+                   error: function(jqXHR, status, response) {
+                   console.log("error!"+response);
+                   console.dir(response);
+                   console.log(status);
+                   $("#response").val("error! "+status);
+                   }
+                   });
+        }
+        </script>
+    </body>
+</html>

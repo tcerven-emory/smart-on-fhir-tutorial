@@ -1,0 +1,41 @@
+<html>
+<body>
+<p id="state">
+&nbsp;
+</p>
+<p id="code">
+&nbsp;
+</p>
+<p id="error">
+&nbsp;
+</p>
+<p id="error_uri">
+&nbsp;
+</p>
+<script>
+var err = get("error");
+var error_uri = get("error_uri");
+var code;
+var state=get("state");
+if (err || error_uri) {
+	if (err) {
+		document.getElementById("error").innerHTML="Error = "+err;
+	}
+	if (error_uri) {
+		document.getElementById("error_uri").innerHTML="Error_uri = "+decodeURI(decodeURI(error_uri));
+	}
+} else {
+	code = get("code");
+	document.getElementById("code").innerHTML="Code = "+code;
+	if (state && state.startsWith("exp")) {
+		window.location.href=state+'?code='+code;
+	}
+}
+
+function get(name){
+   if(name=(new RegExp('[?&]'+encodeURIComponent(name)+'=([^&]*)')).exec(location.search))
+      return decodeURIComponent(name[1]);
+}
+</script>
+</body>
+</html>

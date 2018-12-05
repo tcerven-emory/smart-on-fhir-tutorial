@@ -23,7 +23,8 @@ Copy files to web server.
 - api_demo_code.html
     - Used as the RedirectUrl of the auth code request by the other pages and also the [mobile app demo](https://serviceforge.atlassian.net/wiki/spaces/PEPDAG/pages/242057284/POC+Sandbox+Explorer+Mobile+App+for+iOS).
     - This is the page to which the  login page will redirect upon succusful authentication.
-
+- vkbeautify.0.99.00.beta.js
+    - Dependency in the html files
 ## Summary
 
 The process of logging in a user into a SoF service is documented with these simple client-side javascript/html pages.
